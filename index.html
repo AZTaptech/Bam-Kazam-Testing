@@ -1,0 +1,660 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Room Score Tracker</title> <style> /* Opens the CSS section to define the visual style */
+
+#success-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+        
+        body { /* Selects the entire page body to set defaults */
+            background-color: #121212; /* Sets the background to a dark, modern grey-black */
+            color: #ffffff; /* Sets the default text color to white for contrast */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Sets a clean, modern font stack */
+            margin: 0; /* Removes default messy spacing around the edges */
+            padding: 0; /* Removes default internal spacing */
+            display: flex; /* Uses Flexbox layout to align items easily */
+            flex-direction: column; /* Stacks items vertically (top to bottom) */
+            align-items: center; /* Centers items horizontally in the middle */
+            min-height: 100vh; /* Ensures the background fills the full phone screen height */
+        } /* Closes the body style rule */
+
+        #landing-screen { /* Targets the main container for the landing page */
+            width: 100%; /* Makes the container take up the full width */
+            max-width: 400px; /* Limits width on desktop so it looks like a mobile app */
+            padding: 20px; /* Adds breathing room inside the edges of the screen */
+            box-sizing: border-box; /* Ensures padding doesn't make the box wider than 100% */
+            text-align: center; /* Centers all text inside this container */
+        } /* Closes the landing screen style rule */
+
+        #logo-container img { /* Targets the image inside the logo container */
+            width: 300px; /* Sets a fixed width for the logo */
+            height: auto; /* Keeps the logo aspect ratio correct (no stretching) */
+            margin-bottom: 20px; /* Adds space below the logo */
+            border-radius: 50%; /* Optional: Makes the logo image circular */
+            border: 3px solid #00d4ff; /* Adds a cool cyan border around the logo */
+        } /* Closes the logo image style rule */
+
+        #score-display { /* Targets the score area */
+            background-color: #1e1e1e; /* Sets a slightly lighter background for the score box */
+            padding: 15px; /* Adds space inside the score box */
+            border-radius: 12px; /* Rounds the corners of the score box */
+            margin-bottom: 30px; /* Pushes the buttons away from the score box */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Adds a subtle shadow for depth */
+        } /* Closes the score display style rule */
+
+        h2 {
+            /* Text Styling */
+            margin: 0;
+            font-size: 2rem;
+                
+            /* Spacing from the top of the page */
+            padding-top: 20px;
+                
+            /* Centering */
+            text-align: center;
+            width: 100%; /* Ensures the line goes all the way across */
+            
+            /* The Separator Line */
+            border-bottom: 1px solid #333; /* A thin dark grey line */
+            padding-bottom: 20px; /* Space between text and line */
+            margin-bottom: 20px; /* Space between line and buttons */
+        }
+
+        h3 {
+            text-align: center; /* Centers the text */
+            width: 100%;
+            border-bottom: 1px solid #333; /* Adds the separator line */
+            padding-bottom: 10px; /* Space between text and line */
+            margin-bottom: 20px; /* Space between line and buttons */
+            margin-top: 0;
+        }
+        
+        #current-score { /* Targets the actual score number */
+            color: #00d4ff; /* Makes the score number a bright cyan color */
+            font-weight: bold; /* Makes the score number thick and bold */
+        } /* Closes the current score style rule */
+
+        button { /* Targets all buttons on the page */
+            width: 100%; /* Makes buttons stretch to fill the width */
+            padding: 15px; /* Adds nice internal spacing for easy tapping */
+            margin-bottom: 15px; /* Adds space between each button */
+            background-color: #333333; /* Sets the button background color to dark grey */
+            color: white; /* Sets the button text color to white */
+            border: none; /* Removes the ugly default grey border */
+            border-radius: 8px; /* Rounds the corners of the buttons */
+            font-size: 1.1rem; /* Increases text size for readability */
+            cursor: pointer; /* Changes the mouse cursor to a hand on computers */
+            transition: background-color 0.3s; /* Smoothly animates color changes */
+            -webkit-appearance: none; /* Stops iOS from adding gloss/gradients */
+            appearance: none;         /* Standard reset for other phones */
+        } /* Closes the button style rule */
+
+        button:active { /* Targets the button specifically when it is being tapped */
+            background-color: #00d4ff; /* Flashes blue when you tap it */
+            color: black; /* Changes text to black for contrast when tapped */
+            transform: scale(0.98); /* Slightly shrinks the button for a "click" feel */
+        } /* Closes the button active state rule */
+
+        .screen { /* Targets the screen class we made earlier */
+            display: none; /* Keeps screens hidden by default */
+        } /* Closes the screen class rule */
+
+        .active { /* Targets the active class */
+            display: block; /* Overrides hidden to show the active screen */
+        } /* Closes the active class rule */
+
+/* This class makes the button look finished */
+        .completed-room {
+            text-decoration: line-through !important; /* Cross out text */
+            opacity: 0.5; /* Make it look faded */
+            background-color: #222 !important; /* Make it darker */
+        }
+
+
+        #success-overlay h1 {
+            color: #2ecc71; /* Neon Green */
+            font-size: 3rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px #2ecc71; /* Glowing effect */
+            margin-bottom: 10px;
+        }
+
+        #success-overlay p {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Styling for the hints so they look different */
+        .hint-block {
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 10px;
+        }
+        
+    </style> </head>
+<body>
+
+<div id="success-overlay">
+    <h1>Room Cleared!</h1>
+    <p id="success-points-text">+100 Points</p>
+</div>
+
+        
+    <div id="landing-screen" class="active">
+        
+        <div id="logo-container">
+            <img src="logo.png" alt="Location Logo">
+        </div> <div id="score-display">
+            <h2>Total Score: <span id="current-score">0</span></h2>
+    <div id="room-groups">
+            <button onclick="showTheme(1)"> Game Show </button>
+            <button onclick="showTheme(2)"> Rat Trap </button>
+            <button onclick="showTheme(3)"> Space </button>
+            <button onclick="showTheme(4)"> Island </button>
+            <button onclick="showTheme(5)"> Mineshaft </button>
+            <button onclick="showTheme(6)"> Cat Burglar </button>
+            <button onclick="showTheme(7)"> Temple </button>
+            <button onclick="showTheme(8)"> Hex </button>
+        </div>
+
+<div style="margin-top: 40px; border-top: 1px solid #333; padding-top: 20px;">
+            <button onclick="resetGame()" style="background-color: #333; border: 1px solid #555; font-size: 0.9rem; padding: 10px;">
+                🗑️ Reset / New Game
+            </button>
+        </div>
+        </div>
+</div>
+
+
+<div id="theme-1" class="screen">
+        <h2>Game Show</h2>
+        <div class="room-list">
+            <button id="btn-room-1" onclick="openRoom(1)">Level 1</button>
+            <button id="btn-room-2" onclick="openRoom(2)">Level 2</button>
+            <button id="btn-room-3" onclick="openRoom(3)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-2" class="screen">
+        <h2>Rat Trap</h2>
+        <div class="room-list">
+            <button id="btn-room-4" onclick="openRoom(4)">Level 1</button>
+            <button id="btn-room-5" onclick="openRoom(5)">Level 2</button>
+            <button id="btn-room-6" onclick="openRoom(6)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-3" class="screen">
+        <h2>Space</h2>
+        <div class="room-list">
+            <button id="btn-room-7" onclick="openRoom(7)">Level 1</button>
+            <button id="btn-room-8" onclick="openRoom(8)">Level 2</button>
+            <button id="btn-room-9" onclick="openRoom(9)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-4" class="screen">
+        <h2>Island</h2>
+        <div class="room-list">
+            <button id="btn-room-10" onclick="openRoom(10)">Level 1</button>
+            <button id="btn-room-11" onclick="openRoom(11)">Level 2</button>
+            <button id="btn-room-12" onclick="openRoom(12)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-5" class="screen">
+        <h2>Mineshaft</h2>
+        <div class="room-list">
+            <button id="btn-room-13" onclick="openRoom(13)">Level 1</button>
+            <button id="btn-room-14" onclick="openRoom(14)">Level 2</button>
+            <button id="btn-room-15" onclick="openRoom(15)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-6" class="screen">
+        <h2>Cat Burglar</h2>
+        <div class="room-list">
+            <button id="btn-room-16" onclick="openRoom(16)">Level 1</button>
+            <button id="btn-room-17" onclick="openRoom(17)">Level 2</button>
+            <button id="btn-room-18" onclick="openRoom(18)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-7" class="screen">
+        <h2>Temple</h2>
+        <div class="room-list">
+            <button id="btn-room-19" onclick="openRoom(19)">Level 1</button>
+            <button id="btn-room-20" onclick="openRoom(20)">Level 2</button>
+            <button id="btn-room-21" onclick="openRoom(21)">Level 3</button>
+        </div>
+        <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+    </div>
+
+
+<div id="theme-8" class="screen">
+    <h2>Hex</h2>
+    <div class="room-list">
+        <button id="btn-room-22" onclick="openRoom(22)">Level 1</button>
+        <button id="btn-room-23" onclick="openRoom(23)">Level 2</button>
+        <button id="btn-room-24" onclick="openRoom(24)">Level 3</button>
+    </div>
+    <button onclick="showLandingPage()" style="background-color: #555; margin-top: 20px;">Back to Menu</button>
+</div>
+
+
+
+
+    <div id="room-screen" class="screen">
+        
+        <h2 id="room-title">Room X</h2>
+
+        <div id="hints-container">
+            <h3>Hints cost points!</h3>
+            
+            <div class="hint-block">
+                <button onclick="revealHint(1)" id="hint-btn-1" style="background-color: #f1c40f; color: white; border: none;">
+                    Show Hint 1 (Free!)
+                </button>
+                <p id="hint-text-1" style="display:none; color: #f1c40f; font-weight: bold;">
+                    Hint 1 text...
+                </p>
+            </div>
+
+            <div class="hint-block">
+                <button onclick="revealHint(2)" id="hint-btn-2" style="background-color: #e67e22; color: white; border: none;">
+                    Show Hint 2 (-5 pts)
+                </button>
+                <p id="hint-text-2" style="display:none; color: #e67e22; font-weight: bold;">
+                    Hint 2 text...
+                </p>
+            </div>
+
+            <div class="hint-block">
+                <button onclick="revealHint(3)" id="hint-btn-3" style="background-color: #e74c3c; color: white; border: none;">
+                    Show Hint 3 (-5 pts)
+                </button>
+                <p id="hint-text-3" style="display:none; color: #e74c3c; font-weight: bold;">
+                    Hint 3 text...
+                </p>
+            </div>
+
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button onclick="completeRoom()" style="background-color: #27ae60; padding: 20px; font-size: 1.2rem;">
+                ROOM COMPLETED
+            </button>
+        </div>
+
+        <button onclick="exitRoom()" style="background-color: #c0392b; margin-top: 20px;">
+            Give Up / Back
+        </button>
+
+    </div>
+
+        
+<script>
+    // --- VARIABLES ---
+    var currentActiveRoom = 0; 
+    var totalScore = 0; 
+    var completedRooms = []; 
+    var purchasedHints = {}; 
+
+    // --- ON LOAD ---
+    var savedScore = localStorage.getItem('siteScore');
+    var savedRooms = localStorage.getItem('siteRooms');
+    var savedHints = localStorage.getItem('siteHints');
+
+    if (savedHints) { purchasedHints = JSON.parse(savedHints); }
+
+    if (savedScore) {
+        totalScore = parseInt(savedScore);
+        document.getElementById('current-score').innerText = totalScore;
+    }
+
+    if (savedRooms) {
+        completedRooms = JSON.parse(savedRooms);
+        for (var i = 0; i < completedRooms.length; i++) {
+            var roomNum = completedRooms[i];
+            var btn = document.getElementById('btn-room-' + roomNum);
+            if (btn) btn.classList.add('completed-room');
+        }
+    }
+
+    // --- NAVIGATION ---
+    function showTheme(themeNumber) {
+        document.getElementById('landing-screen').className = 'screen';
+        var themeToOpen = 'theme-' + themeNumber;
+        document.getElementById(themeToOpen).className = 'active';
+    }
+
+    function showLandingPage() {
+        for (var i = 1; i <= 8; i++) {
+            var themeDiv = document.getElementById('theme-' + i);
+            if (themeDiv) themeDiv.className = 'screen';
+        }
+        document.getElementById('landing-screen').className = 'active';
+    }
+
+    function exitRoom() {
+        document.getElementById('room-screen').className = 'screen';
+        // Logic: Rooms 1-3 -> Theme 1, 4-6 -> Theme 2, etc.
+        var themeToGoBackTo = Math.ceil(currentActiveRoom / 3);
+        var themeID = 'theme-' + themeToGoBackTo;
+        document.getElementById(themeID).className = 'active';
+    }
+
+    // --- GAME LOGIC ---
+    function openRoom(roomNumber) {
+        currentActiveRoom = roomNumber;
+        var data = roomData[roomNumber];
+        var level = ((roomNumber - 1) % 3) + 1;
+        document.getElementById('room-title').innerText = 'Level ' + level;        
+        
+        // Reset the interface to default (all buttons shown, text hidden)
+        resetHints();
+
+        // Load Hint Text into the placeholders (if data exists)
+        if (data) {
+            document.getElementById('hint-text-1').innerText = data.hint1 || "No hint available";
+            document.getElementById('hint-text-2').innerText = data.hint2 || "No hint available";
+            document.getElementById('hint-text-3').innerText = data.hint3 || "No hint available";
+        }
+
+        // Check which hints have been bought and reveal them
+        if (purchasedHints[roomNumber]) {
+            var hintsForThisRoom = purchasedHints[roomNumber];
+            
+            // Loop through hint 1, 2, and 3
+            for (var i = 1; i <= 3; i++) {
+                if (hintsForThisRoom.includes(i)) {
+                    // Hide button, Show text
+                    document.getElementById('hint-btn-' + i).style.display = 'none';
+                    document.getElementById('hint-text-' + i).style.display = 'block';
+                }
+            }
+        }
+
+        // Hide all themes
+        for (var i = 1; i <= 8; i++) {
+            var themeDiv = document.getElementById('theme-' + i);
+            if (themeDiv) themeDiv.className = 'screen';
+        }
+        
+        // Show Room
+        document.getElementById('room-screen').className = 'active';
+    } 
+
+    function resetHints() {
+        // Reset Hint 1, 2, and 3
+        for(var i = 1; i <= 3; i++){
+            document.getElementById('hint-text-' + i).style.display = 'none';
+            document.getElementById('hint-btn-' + i).style.display = 'inline-block';
+        }
+    }
+
+    function revealHint(hintNumber) {
+        if (!purchasedHints[currentActiveRoom]) {
+            purchasedHints[currentActiveRoom] = [];
+        }
+
+        if (!purchasedHints[currentActiveRoom].includes(hintNumber)) {
+            
+            // Hide button, show text
+            document.getElementById('hint-btn-' + hintNumber).style.display = 'none';
+            document.getElementById('hint-text-' + hintNumber).style.display = 'block';
+
+            // --- CHANGE IS HERE ---
+            // Only deduct points if it is Hint 2 or Hint 3
+            if (hintNumber > 1) {
+                totalScore -= 5; 
+            }
+            // ---------------------
+
+            document.getElementById('current-score').innerText = totalScore;
+            
+            purchasedHints[currentActiveRoom].push(hintNumber);
+            saveGameData();
+        }
+    }
+
+    function completeRoom() {
+        if (completedRooms.includes(currentActiveRoom)) return;
+
+        // 1. Calculate Level
+        var level = ((currentActiveRoom - 1) % 3) + 1;
+
+        // 2. Decide Points
+        var pointsEarned = 0;
+        if (level === 1) pointsEarned = 15;
+        else if (level === 2) pointsEarned = 35;
+        else pointsEarned = 50;
+
+        // 3. Update Text
+        document.getElementById('success-points-text').innerText = "+" + pointsEarned + " Points";
+
+        var overlay = document.getElementById('success-overlay');
+        overlay.style.animation = 'none';
+        overlay.offsetHeight; 
+        overlay.style.animation = 'fadeIn 0.3s ease-in-out';
+        overlay.style.display = 'flex';
+
+        // 4. Update Score & Save
+        totalScore += pointsEarned;
+        document.getElementById('current-score').innerText = totalScore;
+
+        var buttonId = 'btn-room-' + currentActiveRoom;
+        var buttonElement = document.getElementById(buttonId);
+        if (buttonElement) {
+            buttonElement.classList.add('completed-room');
+        }
+
+        completedRooms.push(currentActiveRoom);
+        saveGameData();
+
+        // 5. Navigation Logic
+        setTimeout(function() {
+            overlay.style.display = 'none';
+            
+            if (level < 3) {
+                // Auto-advance to the next room (e.g. Room 1 -> Room 2)
+                openRoom(currentActiveRoom + 1); 
+            } else {
+                // Level 3 finished -> Kick to Main Menu
+                document.getElementById('room-screen').className = 'screen';
+                showLandingPage();
+            }
+        }, 3000);
+    }
+
+    // --- SAVE/RESET ---
+    function saveGameData() {
+        localStorage.setItem('siteScore', totalScore);
+        localStorage.setItem('siteRooms', JSON.stringify(completedRooms));
+        localStorage.setItem('siteHints', JSON.stringify(purchasedHints));
+    }
+
+    function resetGame() {
+        if(confirm("Are you sure? This will delete all progress.")) {
+            localStorage.removeItem('siteScore');
+            localStorage.removeItem('siteRooms');
+            localStorage.removeItem('siteHints');
+            location.reload();
+        }
+    }
+
+// --- THE HINT DATABASE ---
+    var roomData = {
+        // --- THEME 1: GAME SHOW ---
+        1: { // Wheel of Kazam
+            hint1: "Spin the wheel! Solve the phrase! Make some cash!", 
+            hint2: "The wheel's taking too long? Perhaps low-power spins could help you save time?", 
+            hint3: "Be careful how you spend your cash! If you get both the sphrase and $3k, don't spin! You could go bankrupt!" 
+        },
+        2: { // Bampardy
+            hint1: "Guess the quiestions right and earn money!", 
+            hint2: "When it comes time to wager, only do it if you don't have enough money, you don't want to lose it all!", 
+            hint3: "Get to $2k all together in order to move to to Level 3!" 
+        },
+        3: { // Dance Dance Kazam
+            hint1: "Work as a team and dance together in order to get enough points!", 
+            hint2: "Ignore the contestants, this is not a single player game!", 
+            hint3: "Follow the squares and dance to 100k points!" 
+        },
+
+        // --- THEME 2: RAT TRAP ---
+        4: { // Collect the Cheese
+            hint1: "Don't touch the ground! Climb on the cheese to make your way around the room.", 
+            hint2: "Listen for the dings and watch for glowing cheese, collect the cheese before the time runs out!", 
+            hint3: "Your quest to feed your family is 3 rounds long, make sure to spread out evenly, stepping to the ground to early could be costly!" 
+        },
+        5: { // Escape the Rat Traps
+            hint1: "Make it home without touching the ground or getting caught by the cat!", 
+            hint2: "Be quick on the mouse traps to make its home in time for dinner!", 
+            hint3: "Less agile mice can use the yarnball to their advantage! Don't press the doorbell before everyone is passed the home marker for dinner!" 
+        },
+        6: { // Eat the Cheese
+            hint1: "You've made it home! Now which cheese are you going to eat?", 
+            hint2: "Would it make sense for papa mouse to eat the little cheese?", 
+            hint3: "The seating order on the cheese matters, remember goldilocks and the three bears?" 
+        },
+
+        // --- THEME 3: SPACE ---
+        7: { // Spaceship Pilot
+            hint1: "Every good ship needs a captain, communication is key. Work with your team to enter the mismatched commands!", 
+            hint2: "From left to right at each station, you have auxiliary control, command center, reserve control. ", 
+            hint3: "Keep an eye out for the screen in front for any incoming black holes and how to prevent them!" 
+        },
+        8: { // The Reactor Room
+            hint1: "You have power to the reactor!",
+            hint2: "Match the battery color with the center column!",
+            hint3: "Don't have purple, orange or green? Perhaps you have to mix them! One wrong mix could destroy the ship!"
+        },
+        9: { // The Teleporter
+            hint1: "Step on the blue tiles, stay on them while they blink pink. Step off when they fade away. Repeat!",
+            hint2: "Use the frequency controls to move the blue light behind the person on the teleportor!",
+            hint3: "Use the power controls to move the red dots up and down! They have to move within the other dots of light! Hit the teleport button once it glows blue!"
+        },
+
+        // --- THEME 4: ISLAND
+        10: { // The Whale
+             hint1: "hit the whales uvula to start the game. Memorize the tune sung to you!",
+             hint2: "Each fish makes a different tone, Simon the whale likes it when you repeat his tune!",
+             hint3: "The map lights help you remember the tune so you can sing it back to Simon! Hit the uvula to repeat the song!"
+        },
+        11: { // Fire Watch
+             hint1: "Maneuver through the waves to put out the fires around the room!",
+             hint2: "Be careful. Fires will reignite if not fully extinguished.",
+             hint3: "Red fires are more intense and will reignite quickly, while orange fires are less intense but can still reignite. Put all the fires out to win the game!"
+        },
+        12: { // Monkeys
+             hint1: "Hit the evil monkeys before it’s too late!",
+             hint2: "Watch out for ricochets! If you hit a good monkey it's Game-over!",
+             hint3: "Once all the evil monkeys have been hit you will save the island!"
+        },
+
+        // --- THEME 5: MINESHAFT ---
+        13: { // Dynamite
+            hint1: "Read the DANGER sign. Avoid spiders, snakes, and falling beams!", 
+            hint2: "Did you notice the wire to the fuse is missing for the dynamite?", 
+            hint3: "If there is no wire for the fuse, maybe you can become the wire?" 
+        },
+        14: { // Wooden Ball Machine
+            hint1: "Load a ball in through the glowing hole, then crank the ball into the furnace!", 
+            hint2: "Teamwork and communication! Someone’s gotta be the eyes, while two people control the furnace levers!", 
+            hint3: "You’ll have to get one ball into the hole at the top where the arrows are pointing!" 
+        },
+        15: { // Train Tracks
+            hint1: "Spin the wheel until the generator charge is in the middle, then flick the switch to get your minecart moving!", 
+            hint2: "The minecart is traveling to track five! Deliver just enough power to get it to the next track!", 
+            hint3: "Use the voltage box to guess the correct amount of power! Once the track number is lit green, the track is cleared! Release each voltage button before switching tracks!" 
+        },
+
+        // --- THEME 6: CAT BURGLAR ---
+        16: { // Security Box
+            hint1: "Scale the tightrope and windows to stay off the ground!", 
+            hint2: "Disable the security system! Look for 3 things around the room that will help you do that.", 
+            hint3: "Overload the system with power by pressing 2 green buttons while putting the wire straight back to the box! You’ll have 20 seconds to get in before the security system restarts" 
+        },
+        17: { // Security Guard
+            hint1: "Shhh! Get past the sleepy security guard and make it through the vent!", 
+            hint2: "There's two things that need to be done simultaneously in order for that vent to open!", 
+            hint3: "Be careful, while scanning the security guards badge make sure you don’t rock his chair or he’ll wake up! Turn the key and scan the badge to open the vent!" 
+        },
+        18: { // Museum
+            hint1: "Stay clear of the lasers! Once hit, security will be notified!", 
+            hint2: "Use the red button in the vent to move the lasers in order to move forward, but keep in mind the blue button does something completely different!", 
+            hint3: "The phone call will help you get a code, but this is not your only goal. You broke in to steal prized art! The big clue on what you are trying to steal is in room 1!" 
+        },
+
+        // --- THEME 7: TEMPLE
+        19: { 
+             hint1: "Be cautious when entering the temple, some tiles are booby-trapped!",
+             hint2: "Keep an eye out for a symbol on the wall being shined by a red spotlight. What does it remind you of?",
+             hint3: "You’ll need to step on five letters at once. What’s the largest body of water called?"
+        },
+        20: { 
+             hint1: "Play the drum to keep the laser lit. Use the mirrors!",
+             hint2: "You’re not aiming for the crystal, aim for the center of the golden medallion.",
+             hint3: "It will take steady hands to charge the medallion with the laser. Charging the medallion takes a little bit of time!"
+        },
+        21: { 
+             hint1: "Don’t touch the mummy or the inner-walls of the sarcophagus",
+             hint2: "It's going to require teamwork and timing to break the Mummy's curse!",
+             hint3: "Rotate the tablet by his feet into place, lift the dagger from his chest, Push the brain into his head!"
+        },
+
+        // --- THEME 8: HEX
+        22: { 
+             hint1: "The ghost is angry, don’t let him catch you!",
+             hint2: "What does the ghost say to do? If we can't run, what are our options?",
+             hint3: "Complete the phrase: “You can run but you can’t ____!"
+        },
+        23: { 
+             hint1: "Match the shape of the bat on the wall with the objects provided",
+             hint2: "Listen for the raven! One caw means one object is correct, two caws mean two objects are correct!",
+             hint3: "Some objects have blood dripping off them. Make it match with the blood that’s dripped on the table!"
+        },
+        24: {
+             hint1: "Each belt represents a different emotion. It’s sacrifice-o-clock!",
+             hint2: "Listen to the poem completely, then begin the ritual!",
+             hint3: "Each belt must be placed in the correct order and location! Step off the table, and the ritual will fail. The faster the heartbeat, the further the progress!"
+        }
+    };
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
